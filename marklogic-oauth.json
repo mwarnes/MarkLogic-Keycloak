@@ -1,0 +1,65 @@
+{
+  "clientId": "marklogic-oauth",
+  "name": "",
+  "description": "",
+  "rootUrl": "",
+  "adminUrl": "",
+  "baseUrl": "",
+  "surrogateAuthRequired": false,
+  "enabled": true,
+  "alwaysDisplayInConsole": false,
+  "clientAuthenticatorType": "client-secret",
+  "secret": "4UZyJkjWsGV5JtpsWfgkL1qW5vZ5hhmv",
+  "redirectUris": [
+    "/*"
+  ],
+  "webOrigins": [
+    "/*"
+  ],
+  "notBefore": 0,
+  "bearerOnly": false,
+  "consentRequired": false,
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": true,
+  "serviceAccountsEnabled": true,
+  "publicClient": false,
+  "frontchannelLogout": true,
+  "protocol": "openid-connect",
+  "attributes": {
+    "realm_client": "false",
+    "oidc.ciba.grant.enabled": "false",
+    "client.secret.creation.time": "1750944600",
+    "backchannel.logout.session.required": "true",
+    "standard.token.exchange.enabled": "false",
+    "frontchannel.logout.session.required": "true",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "display.on.consent.screen": "false",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "jwt.credential.certificate": "MIICoTCCAYkCBgGZj2AlVDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAltYXJrbG9naWMwHhcNMjUwOTI4MDgwOTI2WhcNMzUwOTI4MDgxMTA2WjAUMRIwEAYDVQQDDAltYXJrbG9naWMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDNYZy/e+k1tBMr1MHhXC2AWovWmViu6gBPL4qyA/dIrakWVtyMwxx112v8G5KtMr4Ydr1yLunudMwCOc46BCGYxh31kdopOa5SGdFfKPnoXSlWdfdZkoOf8mLPT3Mu2ClbwelC6W8bZlgtL/FfZbZQteW2FUGprfeA5umsuWppThX3CpDpfLrTvxl8ZU65wvd4d1/VewwK9HieElFiJnLVNskMJT9YnkNLA5cfB0ZZKiWxWVPJReOjd1RzcLcL8KxfYnWio1x6JfGYpeuVG8DZ0YWJQUmL1jrY4wSpEUCF13HCcqeoufz0RpTmOm0PR+eI+oPCwBnrVGWxiDE68SXjAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAJcrkFJl1H+qbghXINq+Q0153t8+FYeT4ZAlMsYKVbkH97nZWduHsVC80UMWVsDfvAtFnlgvb/rcdKFvy0i2tRNesTquQfEM/v0o2r8DGHriBTreb5YgJiIhLar2Wop7RCL9Ol37yVsBWE2wAbXgUxsGhw5qUgLlSuEX023sEYbwUWxj+p2op5IZmHwQbXJGBV6imwWG66MHlQzLUkcANWkUeRDbTPVJEHc5LLV1POiSOLp0qNUUYMGLAww3Xr+ust9h1nwP6K8YyD21hOcJhvxhW6Ttp46QkDY/cNYMTxl+sXULTml73mdwAencaeW+xtm2OY4GqTdlniHKzmOnlkU="
+  },
+  "authenticationFlowBindingOverrides": {},
+  "fullScopeAllowed": true,
+  "nodeReRegistrationTimeout": -1,
+  "defaultClientScopes": [
+    "service_account",
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "basic",
+    "email"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "organization",
+    "microprofile-jwt"
+  ],
+  "access": {
+    "view": true,
+    "configure": true,
+    "manage": true
+  }
+}
