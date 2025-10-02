@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>marklogic with keycloak implementation guide</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css" />
+</head>
+<body>
+<h1 id="marklogic-with-keycloak-implementation-guide">MarkLogic with
+Keycloak Implementation Guide</h1>
+<p><strong>Author</strong>: Martin Warnes, Principal Technical Support
+Engineer, Progress Software<br />
+<strong>Document Status</strong>: Draft<br />
+<strong>Last Modified</strong>: October 2, 2025</p>
+<h2 id="introduction">Introduction</h2>
+<p>This document provides comprehensive methods and procedures for
+implementing Keycloak as an identity provider for MarkLogic Application
+Servers. The guide covers the configuration and integration of Keycloak
+and MarkLogic to support both OAuth2 and SAML authentication protocols,
+enabling secure single sign-on (SSO) capabilities for MarkLogic
+applications. By following the procedures outlined in this document,
+organizations can leverage Keycloak’s robust identity and access
+management features to enhance security, streamline user authentication,
+and provide a seamless user experience across their MarkLogic-based
+applications.</p>
+<h3 id="about-marklogic">About MarkLogic</h3>
+<p>MarkLogic is an enterprise NoSQL database platform originally
+developed by MarkLogic Corporation and now owned by Progress Software.
+It is designed to handle complex, multi-structured data including
+documents, metadata, collections, and semantic triples. MarkLogic
+provides a unified platform for data integration, search, analytics, and
+application development, making it particularly suitable for
+content-driven applications and enterprise data hub architectures. The
+platform includes built-in search capabilities, ACID transactions, and
+enterprise-grade security features.</p>
+<p><strong>Website</strong>: <a
+href="https://www.progress.com/marklogic">https://www.progress.com/marklogic</a></p>
+<h3 id="about-keycloak">About Keycloak</h3>
+<p>Keycloak is an open-source identity and access management solution
+developed by Red Hat. It provides comprehensive authentication and
+authorization services for applications and services, supporting
+industry-standard protocols including OAuth 2.0, OpenID Connect, and
+SAML 2.0. Keycloak offers features such as single sign-on (SSO),
+identity brokering, user federation, fine-grained authorization
+policies, and social login capabilities. As a Red Hat project, it
+benefits from enterprise support and continuous development by a vibrant
+open-source community.</p>
+<p><strong>Website</strong>: <a
+href="https://www.keycloak.org">https://www.keycloak.org</a></p>
+<h2 id="scope-and-assumptions">Scope and Assumptions</h2>
+<p>This guide concentrates specifically on creating a Keycloak client
+for OAuth2 and SAML authentication with MarkLogic Application Servers.
+The following assumptions are made:</p>
+<ul>
+<li>Keycloak has already been installed and is running</li>
+<li>A Keycloak realm is already available and configured</li>
+<li>Keycloak users and roles for MarkLogic have been configured</li>
+<li>Basic familiarity with MarkLogic administration</li>
+<li>Administrative access to both Keycloak and MarkLogic systems</li>
+</ul>
+<p>The document will focus on the client configuration process rather
+than the initial Keycloak installation or realm setup procedures.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<h3 id="oauth2-integration">OAuth2 Integration</h3>
+<ul>
+<li><a href="#creating-a-keycloak-openid-connect-client">Creating a
+Keycloak OpenID Connect Client</a>
+<ul>
+<li><a href="#keycloak-openid-client-configuration-settings">Keycloak
+OpenID Client Configuration Settings</a></li>
+<li><a href="#keycloak-roles-considerations">Keycloak Roles
+Considerations</a></li>
+</ul></li>
+<li><a href="#creating-a-marklogic-external-security-profile">Creating a
+MarkLogic External Security Profile</a>
+<ul>
+<li><a href="#obtaining-the-jwks-uri-from-keycloak">Obtaining the JWKS
+URI from Keycloak</a></li>
+<li><a
+href="#configuring-the-marklogic-external-security-profile">Configuring
+the MarkLogic External Security Profile</a></li>
+<li><a href="#example-configuration-reference">Example Configuration
+Reference</a></li>
+<li><a href="#testing-the-configuration">Testing the
+Configuration</a></li>
+</ul></li>
+<li><a href="#oauth2-troubleshooting">OAuth2 Troubleshooting</a>
+<ul>
+<li><a href="#marklogic-troubleshooting">MarkLogic
+Troubleshooting</a></li>
+<li><a href="#keycloak-troubleshooting">Keycloak
+Troubleshooting</a></li>
+<li><a href="#common-oauth2-integration-issues">Common OAuth2
+Integration Issues</a></li>
+<li><a href="#diagnostic-commands">Diagnostic Commands</a></li>
+<li><a href="#best-practices-for-troubleshooting">Best Practices for
+Troubleshooting</a></li>
+</ul></li>
+</ul>
+<h3 id="saml-integration">SAML Integration</h3>
+<ul>
+<li><a href="#saml-integration-overview">SAML Integration
+Overview</a></li>
+<li><a href="#creating-a-keycloak-saml-client">Creating a Keycloak SAML
+Client</a>
+<ul>
+<li><a href="#step-1-create-saml-client-in-keycloak">Step 1: Create SAML
+Client in Keycloak</a></li>
+<li><a href="#step-2-configure-saml-client-settings">Step 2: Configure
+SAML Client Settings</a></li>
+<li><a href="#step-3-configure-saml-attribute-mappings">Step 3:
+Configure SAML Attribute Mappings</a></li>
+</ul></li>
+<li><a
+href="#creating-marklogic-saml-external-security-profile">Creating
+MarkLogic SAML External Security Profile</a>
+<ul>
+<li><a href="#step-1-obtain-keycloak-saml-metadata">Step 1: Obtain
+Keycloak SAML Metadata</a></li>
+<li><a href="#step-2-configure-marklogic-external-security-profile">Step
+2: Configure MarkLogic External Security Profile</a></li>
+<li><a href="#step-3-certificate-management">Step 3: Certificate
+Management</a></li>
+</ul></li>
+<li><a href="#saml-testing-and-validation">SAML Testing and
+Validation</a>
+<ul>
+<li><a href="#testing-saml-authentication-flow">Testing SAML
+Authentication Flow</a></li>
+</ul></li>
+<li><a href="#saml-troubleshooting">SAML Troubleshooting</a></li>
+<li><a href="#best-practices-for-saml-implementation">Best Practices for
+SAML Implementation</a></li>
+</ul>
+<hr />
+<h2 id="creating-a-keycloak-openid-connect-client">Creating a Keycloak
+OpenID Connect Client</h2>
+<p>Create a Keycloak client for use by MarkLogic, the client should use
+“Standard Flow” Authentication.</p>
+<p><strong>Note:</strong> MarkLogic does not support “Implicit Flow” so
+the Access settings can be left unpopulated.</p>
+<h3 id="keycloak-openid-client-configuration-settings">Keycloak OpenID
+Client Configuration Settings</h3>
+<p>The following screenshot shows an example configuration for a
+Keycloak client:</p>
+<figure>
+<img src="images/Keycloak%20OAUTH%20Client%20configuration.png"
+alt="Keycloak OAUTH Client Configuration Settings" />
+<figcaption aria-hidden="true">Keycloak OAUTH Client Configuration
+Settings</figcaption>
+</figure>
+<h3 id="keycloak-roles-considerations">Keycloak Roles
+Considerations</h3>
+<h4 id="json-object-array-compatibility-issue">JSON Object Array
+Compatibility Issue</h4>
+<p>Keycloak returns user roles as JSON object arrays within the
+<code>realm_access</code> and <code>resource_access</code> sections of
+the OpenID access token. However, MarkLogic cannot directly process
+these nested JSON object arrays for role extraction, which creates a
+compatibility challenge.</p>
+<h4 id="openid-access-token-structure">OpenID Access Token
+Structure</h4>
+<p>A typical Keycloak OpenID access token contains roles in the
+following structure:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;exp&quot;</span><span class="fu">:</span> <span class="dv">1759152574</span><span class="fu">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;iat&quot;</span><span class="fu">:</span> <span class="dv">1759152274</span><span class="fu">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;iss&quot;</span><span class="fu">:</span> <span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic&quot;</span><span class="fu">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;realm_access&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;marklogic-user&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-manage&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-admin&quot;</span><span class="ot">]</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;resource_access&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;account&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;manage-account&quot;</span><span class="ot">,</span> <span class="st">&quot;view-profile&quot;</span><span class="ot">]</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;preferred_username&quot;</span><span class="fu">:</span> <span class="st">&quot;martin&quot;</span><span class="fu">,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;martin@example.com&quot;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h4 id="the-problem">The Problem</h4>
+<ul>
+<li><strong><code>realm_access.roles</code></strong>: Contains an array
+of realm-level roles nested within a JSON object</li>
+<li><strong><code>resource_access.[client].roles</code></strong>:
+Contains client-specific roles in a similar nested structure</li>
+<li><strong>MarkLogic Limitation</strong>: MarkLogic’s OAuth2
+implementation cannot parse roles from these nested JSON object
+arrays</li>
+</ul>
+<h4 id="the-solution">The Solution</h4>
+<p>To work around this limitation, Keycloak must be configured to
+provide roles in a format that MarkLogic can process. This typically
+involves:</p>
+<ol type="1">
+<li><strong>Custom Claim Mapping</strong>: Creating a custom mapper that
+flattens the roles into a simple array</li>
+<li><strong>Direct Role Claims</strong>: Configuring a top-level claim
+(like <code>marklogic-roles</code> in the example above) that contains
+roles as a simple string array</li>
+<li><strong>Protocol Mappers</strong>: Using Keycloak’s built-in mappers
+to transform the token structure</li>
+</ol>
+<p>The following example demonstrates a Protocol Mapper that has been
+added to a Profile Scope, which extracts user Realm roles and returns
+them as a new claim using a string data type and name
+“marklogic-roles”.</p>
+<figure>
+<img src="images/Keycloak%20OAUTH%20Mapper.png" alt="Keycloak Mapper" />
+<figcaption aria-hidden="true">Keycloak Mapper</figcaption>
+</figure>
+<p>MarkLogic will be able to access these roles by referencing the claim
+in the External Security profile configuration.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;exp&quot;</span><span class="fu">:</span> <span class="dv">1759152574</span><span class="fu">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;iat&quot;</span><span class="fu">:</span> <span class="dv">1759152274</span><span class="fu">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;iss&quot;</span><span class="fu">:</span> <span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic&quot;</span><span class="fu">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;realm_access&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;marklogic-user&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-manage&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-admin&quot;</span><span class="ot">]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;resource_access&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;account&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;manage-account&quot;</span><span class="ot">,</span> <span class="st">&quot;view-profile&quot;</span><span class="ot">]</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">},</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;marklogic-roles&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="st">&quot;marklogic-user&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-manage&quot;</span><span class="ot">,</span> <span class="st">&quot;marklogic-admin&quot;</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;preferred_username&quot;</span><span class="fu">:</span> <span class="st">&quot;martin&quot;</span><span class="fu">,</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;martin@example.com&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<h2 id="creating-a-marklogic-external-security-profile">Creating a
+MarkLogic External Security Profile</h2>
+<p>Once the Keycloak client is configured with the appropriate role
+mappers, the next step is to create an External Security profile in
+MarkLogic that will integrate with the Keycloak identity provider.</p>
+<h3 id="obtaining-the-jwks-uri-from-keycloak">Obtaining the JWKS URI
+from Keycloak</h3>
+<p>Before configuring the MarkLogic External Security profile, you need
+to obtain the JWKS (JSON Web Key Set) URI from your Keycloak realm. This
+URI is required by MarkLogic to validate the JWT tokens issued by
+Keycloak.</p>
+<h4 id="steps-to-find-the-jwks-uri">Steps to Find the JWKS URI:</h4>
+<ol type="1">
+<li><strong>Access Keycloak Admin Console</strong>: Log into your
+Keycloak admin interface</li>
+<li><strong>Navigate to Realm Settings</strong>: Select your realm
+(e.g., “progress-marklogic”)</li>
+<li><strong>Find OpenID Endpoint Configuration</strong>: In the Realm
+Settings, look for the “OpenID Endpoint Configuration” link</li>
+<li><strong>Access the Configuration</strong>: Click the link to view
+the OpenID configuration JSON</li>
+<li><strong>Locate JWKS URI</strong>: In the configuration JSON, find
+the <code>jwks_uri</code> field</li>
+</ol>
+<p>The JWKS URI typically follows this format:</p>
+<pre><code>https://your-keycloak-server:port/realms/your-realm-name/protocol/openid-connect/certs</code></pre>
+<h3 id="configuring-the-marklogic-external-security-profile">Configuring
+the MarkLogic External Security Profile</h3>
+<p>Access the MarkLogic AdminUI interface and navigate to the External
+Security configuration page.</p>
+<h4 id="required-configuration-settings">Required Configuration
+Settings:</h4>
+<ol type="1">
+<li><p><strong>External Security Name</strong>: Provide a descriptive
+name (e.g., “Keycloak-OAuth2”)</p></li>
+<li><p><strong>Authentication Protocol</strong>: Select
+“oauth2”</p></li>
+<li><p><strong>Cache Timeout</strong>: Set according to your security
+requirements (typically 300-3600 seconds)</p></li>
+<li><p><strong>Authorization</strong>: Select “oauth2”</p></li>
+<li><p><strong>OAuth2 Settings</strong>:</p>
+<ul>
+<li><strong>OAuth Flow Type</strong>: Select “Resource Server”</li>
+<li><strong>OAuth Vendor</strong>: Select “Other”</li>
+<li><strong>OAuth Client ID</strong>: The client id from your Keycloak
+client configuration</li>
+<li><strong>OAuth Token Type</strong>: Select “JSON Web Tokens”</li>
+<li><strong>OAuth username attribute</strong>: Enter the claim holding
+the userid from your Keycloak client configuration</li>
+<li><strong>OAuth role attribute</strong>; Enter “marklogic-roles” (or
+the custom claim name you configured in Keycloak) to map Keycloak roles
+to MarkLogic roles as needed</li>
+<li><strong>OAuth JWT Algorithm</strong>: Select “RS256”</li>
+<li><strong>JWKS URI</strong>: The JWKS URI obtained from the Keycloak
+OpenID configuration</li>
+</ul></li>
+</ol>
+<h3 id="example-configuration-reference">Example Configuration
+Reference</h3>
+<p>For reference, the following is an example of a configured OAUTH
+External Security profile:</p>
+<figure>
+<img
+src="images/MarkLogic%20OAUTH%20External%20Security%20Configuration.png"
+alt="MarkLogic OAUTH External Security Configuration" />
+<figcaption aria-hidden="true">MarkLogic OAUTH External Security
+Configuration</figcaption>
+</figure>
+<h3 id="testing-the-configuration">Testing the Configuration</h3>
+<p>After creating the External Security profile, you can test the OAuth2
+integration using various methods.</p>
+<h4 id="manual-token-testing-with-curl">Manual Token Testing with
+curl</h4>
+<p>You can test the Keycloak token generation and MarkLogic integration
+using the following curl command to obtain a JWT token directly from
+Keycloak:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--location</span> <span class="st">&#39;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/openid-connect/token&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>--header <span class="st">&#39;Content-Type: application/x-www-form-urlencoded&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;username=martin&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;password=sterling123&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;client_id=marklogic-oauth&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;client_secret=4UZyJkjWsGV5JtpsWfgkL1qW5vZ5hhmv&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;grant_type=password&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;scope=openid&#39;</span></span></code></pre></div>
+<h4 id="parameter-explanations">Parameter Explanations</h4>
+<ul>
+<li><strong>URL</strong>:
+<code>https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/openid-connect/token</code>
+<ul>
+<li>The Keycloak token endpoint for your specific realm</li>
+</ul></li>
+<li><strong>Content-Type</strong>:
+<code>application/x-www-form-urlencoded</code>
+<ul>
+<li>Required header for OAuth2 token requests</li>
+</ul></li>
+<li><strong>username</strong>: <code>martin</code>
+<ul>
+<li>The Keycloak user account to authenticate</li>
+</ul></li>
+<li><strong>password</strong>: <code>sterling123</code>
+<ul>
+<li>The user’s password (Note: This is the Resource Owner Password
+Credentials grant type)</li>
+</ul></li>
+<li><strong>client_id</strong>: <code>marklogic-oauth</code>
+<ul>
+<li>The client ID configured in Keycloak for MarkLogic</li>
+</ul></li>
+<li><strong>client_secret</strong>:
+<code>4UZyJkjWsGV5JtpsWfgkL1qW5vZ5hhmv</code>
+<ul>
+<li>The client secret from your Keycloak client configuration</li>
+</ul></li>
+<li><strong>grant_type</strong>: <code>password</code>
+<ul>
+<li>OAuth2 grant type (Resource Owner Password Credentials)</li>
+</ul></li>
+<li><strong>scope</strong>: <code>openid</code>
+<ul>
+<li>Requested OAuth2 scope to include OpenID Connect claims</li>
+</ul></li>
+</ul>
+<h4 id="extracting-and-storing-the-access-token">Extracting and Storing
+the Access Token</h4>
+<p>To extract the access token and store it in an environment variable
+for subsequent API calls, use the following curl command as an
+example:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract access token and store in environment variable</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">ACCESS_TOKEN</span><span class="op">=</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">--silent</span> <span class="at">--location</span> <span class="at">-k</span> <span class="st">&#39;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/openid-connect/token&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>--header <span class="st">&#39;Content-Type: application/x-www-form-urlencoded&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;username=martin&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;password=sterling123&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;client_id=marklogic-oauth&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;client_secret=4UZyJkjWsGV5JtpsWfgkL1qW5vZ5hhmv&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;grant_type=password&#39;</span> <span class="dt">\</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>--data-urlencode <span class="st">&#39;scope=openid&#39;</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-r</span> <span class="st">&#39;.access_token&#39;</span><span class="va">)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify the token was extracted</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Access Token: </span><span class="va">$ACCESS_TOKEN</span><span class="st">&quot;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Export for use in subsequent commands</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">ACCESS_TOKEN</span></span></code></pre></div>
+<p><strong>Prerequisites for token extraction:</strong> -
+<code>jq</code> command-line JSON processor must be installed - The curl
+command must receive a successful response from Keycloak</p>
+<h4 id="using-the-token-with-marklogic">Using the Token with
+MarkLogic</h4>
+<p>Once you have the access token, you can test it against a MarkLogic
+endpoint:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test the token against a MarkLogic endpoint</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--location</span> <span class="st">&#39;http://oauth.warnesnet.com:8002/manage/LATEST/&#39;</span> <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>--header <span class="st">&quot;Authorization: Bearer </span><span class="va">$ACCESS_TOKEN</span><span class="st">&quot;</span></span></code></pre></div>
+<h4 id="verification-steps">Verification Steps</h4>
+<p>After obtaining and using the token:</p>
+<ol type="1">
+<li><strong>Save the Configuration</strong>: Ensure all settings are
+saved in MarkLogic</li>
+<li><strong>Apply to App Server</strong>: Associate the External
+Security profile with your target App Server</li>
+<li><strong>Verify Role Mapping</strong>: Confirm that roles from
+Keycloak are properly mapped in MarkLogic via the Roles External Name
+field</li>
+<li><strong>Test Token Generation</strong>: Use the curl command above
+to obtain a valid JWT token</li>
+<li><strong>Test MarkLogic Authentication</strong>: Use the token to
+authenticate against MarkLogic endpoints</li>
+<li><strong>Check Logs</strong>: Review MarkLogic error logs for any
+authentication issues</li>
+<li><strong>Validate Role Assignment</strong>: Verify that the user
+receives appropriate roles and permissions in MarkLogic</li>
+</ol>
+<p><strong>Security Note</strong>: The Resource Owner Password
+Credentials grant type should only be used for testing purposes. In
+production environments, use the Authorization Code flow in your
+application for better security.</p>
+<h2 id="oauth2-troubleshooting">OAuth2 Troubleshooting</h2>
+<p>When OAuth2 authentication between Keycloak and MarkLogic isn’t
+working as expected, systematic troubleshooting of both systems is
+essential. This section provides guidance on reviewing logs and enabling
+debug traces to identify and resolve integration issues.</p>
+<h3 id="marklogic-troubleshooting">MarkLogic Troubleshooting</h3>
+<h4 id="enabling-debug-trace-events">Enabling Debug Trace Events</h4>
+<p>To increase the level of debug messages in MarkLogic logs, enable the
+following trace event:</p>
+<ol type="1">
+<li><strong>Access MarkLogic Admin Console</strong>: Navigate to
+<code>http://your-marklogic-server:8001</code></li>
+<li><strong>Go to Groups</strong>: Select “Configure” &gt; “Groups” &gt;
+“Default”</li>
+<li><strong>Navigate to Diagnostics</strong>: Click on “Diagnostics” in
+the left navigation</li>
+<li><strong>Add Trace Event</strong>: In the “Trace Events” section, add
+the following trace events:
+<ul>
+<li><code>JSON Status</code></li>
+<li><code>JSON Communications</code></li>
+<li><code>JSON Processing</code></li>
+<li><code>External Authenticate</code></li>
+</ul></li>
+</ol>
+<p>This trace event will provide detailed information about JSON
+processing and OAuth2 token validation in the MarkLogic logs.</p>
+<h4 id="key-marklogic-log-messages-to-look-for">Key MarkLogic Log
+Messages to Look For</h4>
+<p>When troubleshooting OAuth2 issues, watch for these types of log
+entries:</p>
+<ul>
+<li><strong>Token Validation Errors</strong>: Messages about JWT
+signature verification failures</li>
+<li><strong>JWKS URI Issues</strong>: Problems accessing or parsing the
+Keycloak JWKS endpoint</li>
+<li><strong>Role Mapping Problems</strong>: Issues with extracting or
+mapping roles from tokens</li>
+<li><strong>JSON Processing Issues</strong>: Token parsing or claim
+extraction failures</li>
+</ul>
+<h4 id="common-marklogic-oauth2-error-patterns">Common MarkLogic OAuth2
+Error Patterns</h4>
+<pre><code># JWT signature validation failure
+XDMP-OAUTH2: Invalid JWT signature
+
+# JWKS URI access issues
+XDMP-OAUTH2: Unable to retrieve JWKS from URI
+
+# Role claim not found
+XDMP-OAUTH2: Role attribute not found in token
+
+# Token expiration
+XDMP-OAUTH2: JWT token has expired</code></pre>
+<h3 id="keycloak-troubleshooting">Keycloak Troubleshooting</h3>
+<h4 id="keycloak-log-locations">Keycloak Log Locations</h4>
+<p>Keycloak logs are typically located in:</p>
+<p><strong>Standalone Mode:</strong></p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Server logs</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="va">$KEYCLOAK_HOME</span><span class="ex">/standalone/log/server.log</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Access logs (if enabled)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="va">$KEYCLOAK_HOME</span><span class="ex">/standalone/log/access.log</span></span></code></pre></div>
+<p><strong>Docker Deployments:</strong></p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View container logs</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> logs keycloak-container-name</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Follow logs in real-time</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> logs <span class="at">-f</span> keycloak-container-name</span></code></pre></div>
+<h4 id="enabling-debug-logging-in-keycloak">Enabling Debug Logging in
+Keycloak</h4>
+<p>To enable more detailed logging in Keycloak:</p>
+<ol type="1">
+<li><strong>Access Admin Console</strong>: Log into Keycloak admin
+interface</li>
+<li><strong>Navigate to Events</strong>: Go to “Realm Settings” &gt;
+“Events”</li>
+<li><strong>Enable Event Logging</strong>:
+<ul>
+<li>Turn on “Save Events”</li>
+<li>Turn on “Save Admin Events”</li>
+<li>Set appropriate expiration times</li>
+</ul></li>
+<li><strong>Configure Log Levels</strong> (via CLI or
+configuration):</li>
+</ol>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable debug logging for OAuth2/OIDC</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.protocol.oidc:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.services.resources.LoginActionsService:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.authentication:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span></code></pre></div>
+<h4 id="key-keycloak-log-messages-to-monitor">Key Keycloak Log Messages
+to Monitor</h4>
+<ul>
+<li><strong>Authentication Events</strong>: User login attempts and
+results</li>
+<li><strong>Token Generation</strong>: OAuth2/OIDC token creation and
+signing</li>
+<li><strong>Client Authentication</strong>: Client credential
+validation</li>
+<li><strong>Mapper Execution</strong>: Protocol mapper processing and
+claim generation</li>
+<li><strong>CORS Issues</strong>: Cross-origin request problems</li>
+<li><strong>Client Configuration Errors</strong>: Invalid redirect URIs
+or client settings</li>
+</ul>
+<h3 id="common-oauth2-integration-issues">Common OAuth2 Integration
+Issues</h3>
+<h4 id="token-signature-verification-failures">1. Token Signature
+Verification Failures</h4>
+<p><strong>Symptoms:</strong> - MarkLogic rejects valid tokens -
+“Invalid JWT signature” errors in MarkLogic logs</p>
+<p><strong>Solutions:</strong> - Verify JWKS URI is accessible from
+MarkLogic server - Check network connectivity and firewall rules -
+Ensure MarkLogic system time is synchronized - Validate the JWKS URI in
+External Security profile</p>
+<h4 id="role-mapping-problems">2. Role Mapping Problems</h4>
+<p><strong>Symptoms:</strong> - Users authenticate but receive
+insufficient permissions - Role-related errors in MarkLogic logs</p>
+<p><strong>Solutions:</strong> - Verify the custom role claim name in
+both Keycloak mapper and MarkLogic profile - Check that the Protocol
+Mapper is correctly configured and enabled - Ensure the claim appears in
+the token (decode JWT to verify) - Validate MarkLogic role mapping
+configuration</p>
+<h4 id="client-configuration-mismatches">3. Client Configuration
+Mismatches</h4>
+<p><strong>Symptoms:</strong> - Authentication flows fail at various
+stages - Client authentication errors in Keycloak logs</p>
+<p><strong>Solutions:</strong> - Verify client ID matches between
+Keycloak and MarkLogic - Check client secret if using confidential
+client - Ensure redirect URIs are correctly configured - Validate OAuth2
+flow settings (Standard Flow enabled)</p>
+<h4 id="network-and-connectivity-issues">4. Network and Connectivity
+Issues</h4>
+<p><strong>Symptoms:</strong> - Intermittent authentication failures -
+Timeout errors in logs</p>
+<p><strong>Solutions:</strong> - Test network connectivity between
+MarkLogic and Keycloak - Check DNS resolution for Keycloak hostnames -
+Verify SSL/TLS certificate validity - Ensure proper firewall rules are
+in place</p>
+<h3 id="diagnostic-commands">Diagnostic Commands</h3>
+<h4 id="test-jwks-uri-accessibility">Test JWKS URI Accessibility</h4>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test JWKS URI from MarkLogic server</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-v</span> <span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/openid-connect/certs&quot;</span></span></code></pre></div>
+<h4 id="decode-jwt-token-for-analysis">Decode JWT Token for
+Analysis</h4>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Decode JWT token to inspect claims (requires jwt-cli or online decoder)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$ACCESS_TOKEN</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="ex">jwt</span> decode <span class="at">-</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Note: Requires the jwt-cli tools package</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Or using online tool: https://jwt.io/</span></span></code></pre></div>
+<h4 id="test-token-validity">Test Token Validity</h4>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate token against Keycloak userinfo endpoint</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$ACCESS_TOKEN</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/openid-connect/userinfo&quot;</span></span></code></pre></div>
+<h3 id="best-practices-for-troubleshooting">Best Practices for
+Troubleshooting</h3>
+<ol type="1">
+<li><strong>Enable Logging Early</strong>: Turn on debug logging before
+testing</li>
+<li><strong>Test Components Separately</strong>: Verify Keycloak token
+generation before testing MarkLogic integration</li>
+<li><strong>Use Network Tools</strong>: Employ tools like curl,
+nslookup, and telnet for connectivity testing</li>
+<li><strong>Monitor Both Systems</strong>: Watch logs on both Keycloak
+and MarkLogic simultaneously</li>
+<li><strong>Document Configurations</strong>: Keep detailed records of
+all configuration settings</li>
+<li><strong>Test with Simple Scenarios</strong>: Start with basic
+authentication before adding complex role mappings</li>
+</ol>
+<hr />
+<h1 id="saml-integration-with-keycloak-and-marklogic">SAML Integration
+with Keycloak and MarkLogic</h1>
+<p>This section covers the configuration and integration of Keycloak as
+a SAML 2.0 identity provider for MarkLogic Application Servers. SAML
+(Security Assertion Markup Language) provides an alternative
+authentication method to OAuth2, particularly suited for enterprise
+environments with existing SAML infrastructure.</p>
+<h2 id="saml-integration-overview">SAML Integration Overview</h2>
+<p>SAML authentication flow between MarkLogic and Keycloak involves:</p>
+<ol type="1">
+<li><strong>User Access</strong>: User attempts to access a MarkLogic
+application</li>
+<li><strong>SAML Request</strong>: MarkLogic generates and sends a SAML
+authentication request to Keycloak</li>
+<li><strong>User Authentication</strong>: Keycloak authenticates the
+user (if not already authenticated)</li>
+<li><strong>SAML Response</strong>: Keycloak generates a SAML response
+with user attributes and roles</li>
+<li><strong>Token Validation</strong>: MarkLogic validates the SAML
+response and extracts user information</li>
+<li><strong>Access Granted</strong>: User gains access to MarkLogic
+resources based on their roles</li>
+</ol>
+<h2 id="creating-a-keycloak-saml-client">Creating a Keycloak SAML
+Client</h2>
+<h3 id="step-1-create-saml-client-in-keycloak">Step 1: Create SAML
+Client in Keycloak</h3>
+<ol type="1">
+<li><strong>Access Keycloak Admin Console</strong>: Navigate to your
+Keycloak admin interface</li>
+<li><strong>Select Realm</strong>: Choose your realm (e.g.,
+“progress-marklogic”)</li>
+<li><strong>Navigate to Clients</strong>: Click “Clients” in the left
+sidebar</li>
+<li><strong>Create Client</strong>: Click “Create client”</li>
+<li><strong>Configure Basic Settings</strong>:
+<ul>
+<li><strong>Client type</strong>: Select “SAML”</li>
+<li><strong>Client ID</strong>: Enter a unique identifier (e.g.,
+“marklogic-saml”)</li>
+<li><strong>Name</strong>: Provide a descriptive name</li>
+<li><strong>Description</strong>: Optional description for
+documentation</li>
+</ul></li>
+</ol>
+<h3 id="step-2-configure-saml-client-settings">Step 2: Configure SAML
+Client Settings</h3>
+<h4 id="general-settings">General Settings</h4>
+<ul>
+<li><strong>Client ID</strong>: <code>marklogic-saml</code> (or your
+chosen identifier)</li>
+<li><strong>Name</strong>: <code>MarkLogic SAML Client</code></li>
+<li><strong>Description</strong>:
+<code>SAML client for MarkLogic Application Server authentication</code></li>
+<li><strong>Always display in UI</strong>: Off (typically)</li>
+<li><strong>Client authentication</strong>: On (recommended for
+production)</li>
+</ul>
+<p><strong>Important Note</strong>: Make a note of the Client ID chosen
+as this must match excactlythe <code>SAML Issuer</code> field in the
+MarkLogic SAML configuration.</p>
+<h4 id="saml-settings">SAML Settings</h4>
+<p><strong>Basic SAML Configuration:</strong> - <strong>Include
+AuthnStatement</strong>: On - <strong>Include OneTimeUse
+Condition</strong>: Off - <strong>Sign Documents</strong>: On -
+<strong>Sign Assertions</strong>: On - <strong>Name ID Format</strong>:
+username or email - <strong>Home URL</strong>:
+<code>http://your-marklogic-server:8002/</code> - <strong>Valid Redirect
+URIs</strong>: <code>http://your-marklogic-server:8002/</code> -
+<strong>Master SAML Processing URL</strong>:
+<code>http://your-marklogic-server:8002/</code></p>
+<p>The following screenshot shows an example configuration for a
+Keycloak client:</p>
+<figure>
+<img src="images/Keycloak%20SAML%20Client%20Configuration.png"
+alt="Keycloak SAML Client Configuration Settings" />
+<figcaption aria-hidden="true">Keycloak SAML Client Configuration
+Settings</figcaption>
+</figure>
+<h3 id="step-3-configure-saml-attribute-mappings">Step 3: Configure SAML
+Attribute Mappings</h3>
+<p>Similar to OAuth2, you need to map user attributes and roles for
+MarkLogic consumption.</p>
+<h4 id="create-role-mapper">Create Role Mapper</h4>
+<ol type="1">
+<li><strong>Navigate to Client Scopes</strong>: Go to “Client scopes” in
+Keycloak</li>
+<li><strong>Select Client Scope</strong>: Choose the appropriate scope
+or create a new one</li>
+<li><strong>Add Mapper</strong>: Click “Add predefined mapper”</li>
+<li><strong>Configure Role Mapper</strong>:
+<ul>
+<li><strong>Name</strong>: <code>marklogic-roles</code></li>
+<li><strong>Mapper Type</strong>: <code>Role list</code></li>
+<li><strong>Role Attribute Name</strong>:
+<code>marklogic-roles</code></li>
+<li><strong>Friendly Name</strong>: <code>MarkLogic Roles</code></li>
+<li><strong>SAML Attribute Name</strong>:
+<code>marklogic-roles</code></li>
+<li><strong>SAML Attribute NameFormat</strong>: <code>Basic</code></li>
+</ul></li>
+</ol>
+<figure>
+<img src="images/Keycloak%20SAML%20Mapper.png"
+alt="Keycloak SAML Mapper" />
+<figcaption aria-hidden="true">Keycloak SAML Mapper</figcaption>
+</figure>
+<h2 id="creating-marklogic-saml-external-security-profile">Creating
+MarkLogic SAML External Security Profile</h2>
+<h3 id="step-1-obtain-keycloak-saml-metadata">Step 1: Obtain Keycloak
+SAML Metadata</h3>
+<p>First, obtain the SAML metadata from your Keycloak realm:</p>
+<p><strong>SAML Metadata URL:</strong></p>
+<pre><code>https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/descriptor</code></pre>
+<p>Download or access this metadata as it contains essential
+configuration information for MarkLogic.</p>
+<p><strong>Example IdP Metadata</strong></p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode xml"><code class="sourceCode xml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">&lt;?xml</span><span class="ot"> version=</span><span class="st">&quot;1.0&quot;</span><span class="ot"> encoding=</span><span class="st">&quot;UTF-8&quot;</span><span class="fu">?&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">md:EntityDescriptor</span><span class="ot"> xmlns=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="ot">    xmlns:md=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:metadata&quot;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="ot">    xmlns:saml=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:assertion&quot;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="ot">    xmlns:ds=</span><span class="st">&quot;http://www.w3.org/2000/09/xmldsig#&quot;</span><span class="ot"> entityID=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic&quot;</span>&gt;</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">md:IDPSSODescriptor</span><span class="ot"> WantAuthnRequestsSigned=</span><span class="st">&quot;true&quot;</span><span class="ot"> protocolSupportEnumeration=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:protocol&quot;</span>&gt;</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:KeyDescriptor</span><span class="ot"> use=</span><span class="st">&quot;signing&quot;</span>&gt;</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>            &lt;<span class="kw">ds:KeyInfo</span>&gt;</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">ds:KeyName</span>&gt;9xJihMI2qDH9Aon014odONQLByhF553_8Wu_zcM2StM&lt;/<span class="kw">ds:KeyName</span>&gt;</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>                &lt;<span class="kw">ds:X509Data</span>&gt;</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>                    &lt;<span class="kw">ds:X509Certificate</span>&gt;MIICszCCAZsCBgGXq8D+0jANBgkqhkiG9w0BAQsFADAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwHhcNMjUwNjI2MTAxOTAxWhcNMzUwNjI2MTAyMDQxWjAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDwjlL7ZifNR5ixXQrRvwD9dDiQFa6Fm2iPOnpxwhvr+k9c2hRpbCvo0r43I5lNGE5cDab31AHfO8gfz0nJlpzLAfRIUZ1H6ikcZD09ctRE3+TMQYkyMcPC7rMpoyPr2BoPzqVbMoE+84sUbsDfrbfp51PKh51MvILDjfWGCyOw1J5+gLspT9woBQULMPTdS41omT8JtOCqEUmi4+04fQgadano3ruhom8QSRXuUZOTpwpDTxYRjFIi//wywRSRRIJbFFw58c1ec+8JSz9XQqh0yahKdX+O53zyIhT0HakAkNUZ+cSU6czJHXrAtEZNg4dy2AHG9wpl7deC9DlsZmUhAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAE+fJ24YCSAw0/C0tdj8meNoeypkODUc9KYUHZdjnjJT+Efcs7bzV3JzXk/ZHTNWRewCJtfIe7dOYb50EqjZ+g5ToIgYfh9UgoKH4IrZF7caha/xcm3ffvIqlv67llATDolRPtTZMgJkhnTozeUajh2sDVYXHV78Qh4NsgtGVjPPxPdebx4cx4Qs5v0aiWdNEsp1ranvElFzcuVBbTe6wpp62IGLWawhiVeIe4LkIl4Qj/CGTPnx2sWitFZZ7jX9oIJjh4i2OtM0at3Uc+fj3InOTONL4Q2J6gf/1YfyYMygjcdsX5TSZmF7OIhf8qsDUeE9I1yAtUkTKDV/FevmFDE=&lt;/<span class="kw">ds:X509Certificate</span>&gt;</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>                &lt;/<span class="kw">ds:X509Data</span>&gt;</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>            &lt;/<span class="kw">ds:KeyInfo</span>&gt;</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        &lt;/<span class="kw">md:KeyDescriptor</span>&gt;</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:ArtifactResolutionService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:SOAP&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/resolve&quot;</span><span class="ot"> index=</span><span class="st">&quot;0&quot;</span>/&gt;</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleLogoutService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleLogoutService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleLogoutService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleLogoutService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:SOAP&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:NameIDFormat</span>&gt;urn:oasis:names:tc:SAML:2.0:nameid-format:persistent&lt;/<span class="kw">md:NameIDFormat</span>&gt;</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:NameIDFormat</span>&gt;urn:oasis:names:tc:SAML:2.0:nameid-format:transient&lt;/<span class="kw">md:NameIDFormat</span>&gt;</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:NameIDFormat</span>&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified&lt;/<span class="kw">md:NameIDFormat</span>&gt;</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:NameIDFormat</span>&gt;urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress&lt;/<span class="kw">md:NameIDFormat</span>&gt;</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleSignOnService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleSignOnService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleSignOnService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:SOAP&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">md:SingleSignOnService</span><span class="ot"> Binding=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact&quot;</span><span class="ot"> Location=</span><span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml&quot;</span>/&gt;</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">md:IDPSSODescriptor</span>&gt;</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">md:EntityDescriptor</span>&gt;</span></code></pre></div>
+<h3 id="step-2-configure-marklogic-external-security-profile">Step 2:
+Configure MarkLogic External Security Profile</h3>
+<p>Access the MarkLogic Admin interface and create a new External
+Security profile:</p>
+<h4 id="required-configuration-settings-1">Required Configuration
+Settings</h4>
+<ol type="1">
+<li><strong>External Security Name</strong>:
+<code>Keycloak-SAML</code></li>
+<li><strong>Description</strong>:
+<code>SAML integration with Keycloak identity provider</code></li>
+<li><strong>Authentication Protocol</strong>: <code>saml</code></li>
+<li><strong>Cache Timeout</strong>: <code>300</code> (or as
+required)</li>
+<li><strong>Authorization</strong>: <code>saml</code></li>
+</ol>
+<h4 id="saml-specific-settings">SAML-Specific Settings</h4>
+<ol type="1">
+<li><strong>SAML Settings</strong>:
+<ul>
+<li><strong>SAML Entity ID</strong>: <code>YOUR-SAML-SP</code></li>
+<li><strong>SAML Destination</strong>:
+<code>https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml</code>
+(Matches SingleSignOnService value for HTTP-POST from Keycloak SAML
+metadata )</li>
+<li><strong>SAML Issuer</strong>: <code>marklogic-saml</code> (matches
+Keycloak Client ID)</li>
+</ul></li>
+<li><strong>Certificate Configuration</strong>:
+<ul>
+<li><strong>IdP Certificate</strong>: Copy the X.509 certificate from
+Keycloak SAML metadata</li>
+</ul></li>
+</ol>
+<p><strong>Important Note</strong>: The certificate value from the
+Keycloak SAML metadata is a Base64 encoded string. MarkLogic requires
+this certificate to be converted to PEM format before it can be used in
+the External Security configuration.</p>
+<p><strong>Base64 to PEM Conversion Process</strong>: The certificate in
+the metadata appears as a single Base64 string without headers. You must
+add the appropriate PEM headers
+(<code>-----BEGIN CERTIFICATE-----</code> and
+<code>-----END CERTIFICATE-----</code>) and ensure proper line
+formatting (64 characters per line) for MarkLogic to accept it.</p>
+<ol start="3" type="1">
+<li><strong>Attribute Mapping</strong>:
+<ul>
+<li><strong>Username Attribute</strong>: <code>username</code></li>
+<li><strong>Role Attribute</strong>: <code>marklogic-roles</code></li>
+<li><strong>Email Attribute</strong>: <code>email</code> (optional)</li>
+</ul></li>
+</ol>
+<h3 id="step-3-certificate-management">Step 3: Certificate
+Management</h3>
+<h4 id="obtaining-keycloak-certificate">Obtaining Keycloak
+Certificate</h4>
+<p>Extract the X.509 certificate from the SAML metadata:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode xml"><code class="sourceCode xml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">ds:X509Certificate</span>&gt;</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>MIICmzCCAYMCBgF/... (certificate content)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">ds:X509Certificate</span>&gt;</span></code></pre></div>
+<h4 id="converting-base64-certificate-to-pem-format">Converting Base64
+Certificate to PEM Format</h4>
+<p>The certificate content from the SAML metadata is in Base64 format
+and must be converted to PEM format for MarkLogic. Use the following
+script to perform this conversion:</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Certificate conversion script</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Usage: ./convert-cert.sh &lt;base64-certificate-string&gt;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="va">$#</span> <span class="ot">-eq</span> 0 <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">&quot;Usage: </span><span class="va">$0</span><span class="st"> &lt;base64-certificate-string&gt;&quot;</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">&quot;Example: </span><span class="va">$0</span><span class="st"> &#39;MIICmzCCAYMCBgF/...&#39;&quot;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">exit</span> 1</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="va">BASE64_CERT</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Create PEM formatted certificate</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&lt;&lt; EOF</span> <span class="op">&gt;</span> keycloak-idp-certificate.pem</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="st">-----BEGIN CERTIFICATE-----</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="va">$(</span><span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$BASE64_CERT</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">fold</span> <span class="at">-w</span> 64<span class="va">)</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="st">-----END CERTIFICATE-----</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Certificate converted and saved as &#39;keycloak-idp-certificate.pem&#39;&quot;</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;You can now copy the contents of this file into MarkLogic External Security configuration&quot;</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Optionally display the certificate info</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Certificate information:&quot;</span></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> x509 <span class="at">-in</span> keycloak-idp-certificate.pem <span class="at">-text</span> <span class="at">-noout</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-20</span></span></code></pre></div>
+<p><strong>Alternative one-liner conversion:</strong></p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Quick conversion command</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;-----BEGIN CERTIFICATE-----&quot;</span> <span class="op">&gt;</span> keycloak-cert.pem</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;YOUR_BASE64_CERT_HERE&quot;</span> <span class="kw">|</span> <span class="fu">fold</span> <span class="at">-w</span> 64 <span class="op">&gt;&gt;</span> keycloak-cert.pem  </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;-----END CERTIFICATE-----&quot;</span> <span class="op">&gt;&gt;</span> keycloak-cert.pem</span></code></pre></div>
+<p><strong>Manual conversion steps:</strong></p>
+<ol type="1">
+<li>Copy the Base64 certificate string from the SAML metadata (content
+between <code>&lt;ds:X509Certificate&gt;</code> tags)</li>
+<li>Create a new file with <code>.pem</code> extension</li>
+<li>Add the header: <code>-----BEGIN CERTIFICATE-----</code></li>
+<li>Add the Base64 certificate content with line breaks every 64
+characters</li>
+<li>Add the footer: <code>-----END CERTIFICATE-----</code></li>
+<li>Save the file and copy its contents into MarkLogic External Security
+configuration</li>
+</ol>
+<h3 id="example-configuration-reference-1">Example Configuration
+Reference</h3>
+<p>For reference, the following is an example of a configured SAML
+External Security profile:</p>
+<figure>
+<img
+src="images/MarkLogic%20SAML%20External%20Security%20Configuration.png"
+alt="MarkLogic OAUTH External Security Configuration" />
+<figcaption aria-hidden="true">MarkLogic OAUTH External Security
+Configuration</figcaption>
+</figure>
+<h2 id="saml-testing-and-validation">SAML Testing and Validation</h2>
+<h3 id="testing-saml-authentication-flow">Testing SAML Authentication
+Flow</h3>
+<ol type="1">
+<li><strong>Configure App Server</strong>: Associate the SAML External
+Security profile with your MarkLogic App Server</li>
+<li><strong>Test SSO</strong>: Access a protected MarkLogic
+resource</li>
+<li><strong>Verify Redirect</strong>: Confirm redirection to Keycloak
+login page</li>
+<li><strong>Complete Authentication</strong>: Log in with valid Keycloak
+credentials</li>
+<li><strong>Validate Response</strong>: Verify successful return to
+MarkLogic with proper roles</li>
+</ol>
+<h3 id="saml-response-validation">SAML Response Validation</h3>
+<p>Use browser developer tools to inspect the SAML response:</p>
+<ol type="1">
+<li><strong>Network Tab</strong>: Monitor network requests during
+authentication</li>
+<li><strong>SAML Response</strong>: Look for POST requests to the ACS
+endpoint</li>
+<li><strong>Response Content</strong>: Decode base64 SAML response to
+verify attributes</li>
+</ol>
+<p>Example SAML assertion structure:</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode xml"><code class="sourceCode xml"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>&lt;<span class="kw">saml:Assertion</span>&gt;</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  &lt;<span class="kw">saml:AttributeStatement</span>&gt;</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    &lt;<span class="kw">saml:Attribute</span><span class="ot"> Name=</span><span class="st">&quot;Role&quot;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="ot">        NameFormat=</span><span class="st">&quot;urn:oasis:names:tc:SAML:2.0:attrname-format:basic&quot;</span>&gt;</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        &lt;<span class="kw">saml:AttributeValue</span><span class="ot"> xmlns:xs=</span><span class="st">&quot;http://www.w3.org/2001/XMLSchema&quot;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="ot">            xmlns:xsi=</span><span class="st">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span><span class="ot"> xsi:type=</span><span class="st">&quot;xs:string&quot;</span> &gt;marklogic-admin&lt;/<span class="kw">saml:AttributeValue</span>&gt;</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    &lt;/<span class="kw">saml:Attribute</span>&gt;</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  &lt;/<span class="kw">saml:AttributeStatement</span>&gt;</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>&lt;/<span class="kw">saml:Assertion</span>&gt;</span></code></pre></div>
+<h2 id="saml-troubleshooting">SAML Troubleshooting</h2>
+<h3 id="common-saml-issues">Common SAML Issues</h3>
+<h4 id="certificate-validation-failures">1. Certificate Validation
+Failures</h4>
+<p><strong>Symptoms:</strong> - SAML signature validation errors -
+Certificate-related error messages in MarkLogic logs</p>
+<p><strong>Solutions:</strong> - Verify IdP certificate is correctly
+copied from Keycloak metadata - Ensure certificate format is correct
+(PEM format) - Check certificate expiration dates - Validate certificate
+chain if using intermediate CAs</p>
+<h4 id="attribute-mapping-problems">2. Attribute Mapping Problems</h4>
+<p><strong>Symptoms:</strong> - Users authenticate but receive no roles
+- Missing user attributes in MarkLogic</p>
+<p><strong>Solutions:</strong> - Verify attribute mapper configuration
+in Keycloak - Check SAML attribute names match MarkLogic configuration -
+Inspect SAML response for correct attribute format - Ensure role mappers
+are enabled and properly configured</p>
+<h4 id="url-and-endpoint-mismatches">3. URL and Endpoint Mismatches</h4>
+<p><strong>Symptoms:</strong> - SAML redirect failures - ACS endpoint
+not found errors</p>
+<p><strong>Solutions:</strong> - Verify ACS URL matches in both Keycloak
+and MarkLogic configurations - Check redirect URIs are correctly
+configured - Ensure network accessibility between systems - Validate SLO
+endpoints for logout functionality</p>
+<h3 id="saml-debug-logging">SAML Debug Logging</h3>
+<h4 id="marklogic-saml-trace-events">MarkLogic SAML Trace Events</h4>
+<p>Enable the following trace events in MarkLogic for SAML
+debugging:</p>
+<ol type="1">
+<li><strong>Navigate to Diagnostics</strong>: MarkLogic Admin &gt;
+Groups &gt; Default &gt; Diagnostics</li>
+<li><strong>Add Trace Events</strong>:
+<ul>
+<li><code>SAML</code></li>
+<li><code>SAML Response</code></li>
+<li><code>External Authenticate</code></li>
+</ul></li>
+</ol>
+<h4 id="keycloak-saml-logging">Keycloak SAML Logging</h4>
+<p>Enable SAML-specific logging in Keycloak:</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable SAML protocol logging</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.protocol.saml:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable SAML processing logging  </span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.saml:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable XML signature logging</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="ex">/subsystem=logging/logger=org.keycloak.saml.common:add</span><span class="er">(</span><span class="va">level</span><span class="op">=</span>DEBUG<span class="kw">)</span></span></code></pre></div>
+<h3 id="saml-diagnostic-tools">SAML Diagnostic Tools</h3>
+<h4 id="decode-saml-response">Decode SAML Response</h4>
+<p>Use online tools or command-line utilities to decode SAML
+responses:</p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Decode base64 SAML response</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;BASE64_SAML_RESPONSE&quot;</span> <span class="kw">|</span> <span class="fu">base64</span> <span class="at">-d</span> <span class="kw">|</span> <span class="ex">xmllint</span> <span class="at">--format</span> <span class="at">-</span></span></code></pre></div>
+<p>Alternativel use a Browser Extension such as <code>SAML Tracer</code>
+to track SAML Requests and Responses</p>
+<h4 id="validate-saml-metadata">Validate SAML Metadata</h4>
+<p>Test Keycloak SAML metadata accessibility:</p>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test metadata endpoint</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-v</span> <span class="st">&quot;https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/descriptor&quot;</span></span></code></pre></div>
+<h2 id="best-practices-for-saml-implementation">Best Practices for SAML
+Implementation</h2>
+<ol type="1">
+<li><strong>Certificate Management</strong>: Implement proper
+certificate rotation procedures</li>
+<li><strong>Secure Communication</strong>: Always use HTTPS for SAML
+endpoints</li>
+<li><strong>Attribute Minimization</strong>: Only include necessary
+attributes in SAML responses</li>
+<li><strong>Regular Testing</strong>: Periodically test both SSO and SLO
+flows</li>
+<li><strong>Documentation</strong>: Maintain detailed documentation of
+all SAML configurations</li>
+<li><strong>Monitoring</strong>: Set up monitoring for SAML
+authentication success/failure rates</li>
+</ol>
+</body>
+</html>
