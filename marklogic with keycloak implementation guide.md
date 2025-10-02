@@ -1,6 +1,8 @@
 # MarkLogic with Keycloak Implementation Guide
 
-**Author**: Martin Warnes, Principal Technical Support Engineer, Progress Software
+**Author**: Martin Warnes, Principal Technical Support Engineer, Progress Software  
+**Document Status**: Draft  
+**Last Modified**: October 2, 2025
 
 ## Introduction
 
@@ -29,6 +31,41 @@ This guide concentrates specifically on creating a Keycloak client for OAuth2 an
 - Administrative access to both Keycloak and MarkLogic systems
 
 The document will focus on the client configuration process rather than the initial Keycloak installation or realm setup procedures.
+
+## Table of Contents
+
+### OAuth2 Integration
+- [Creating a Keycloak OpenID Connect Client](#creating-a-keycloak-openid-connect-client)
+  - [Keycloak OpenID Client Configuration Settings](#keycloak-openid-client-configuration-settings)
+  - [Keycloak Roles Considerations](#keycloak-roles-considerations)
+- [Creating a MarkLogic External Security Profile](#creating-a-marklogic-external-security-profile)
+  - [Obtaining the JWKS URI from Keycloak](#obtaining-the-jwks-uri-from-keycloak)
+  - [Configuring the MarkLogic External Security Profile](#configuring-the-marklogic-external-security-profile)
+  - [Example Configuration Reference](#example-configuration-reference)
+  - [Testing the Configuration](#testing-the-configuration)
+- [OAuth2 Troubleshooting](#oauth2-troubleshooting)
+  - [MarkLogic Troubleshooting](#marklogic-troubleshooting)
+  - [Keycloak Troubleshooting](#keycloak-troubleshooting)
+  - [Common OAuth2 Integration Issues](#common-oauth2-integration-issues)
+  - [Diagnostic Commands](#diagnostic-commands)
+  - [Best Practices for Troubleshooting](#best-practices-for-troubleshooting)
+
+### SAML Integration
+- [SAML Integration Overview](#saml-integration-overview)
+- [Creating a Keycloak SAML Client](#creating-a-keycloak-saml-client)
+  - [Step 1: Create SAML Client in Keycloak](#step-1-create-saml-client-in-keycloak)
+  - [Step 2: Configure SAML Client Settings](#step-2-configure-saml-client-settings)
+  - [Step 3: Configure SAML Attribute Mappings](#step-3-configure-saml-attribute-mappings)
+- [Creating MarkLogic SAML External Security Profile](#creating-marklogic-saml-external-security-profile)
+  - [Step 1: Obtain Keycloak SAML Metadata](#step-1-obtain-keycloak-saml-metadata)
+  - [Step 2: Configure MarkLogic External Security Profile](#step-2-configure-marklogic-external-security-profile)
+  - [Step 3: Certificate Management](#step-3-certificate-management)
+- [SAML Testing and Validation](#saml-testing-and-validation)
+  - [Testing SAML Authentication Flow](#testing-saml-authentication-flow)
+- [SAML Troubleshooting](#saml-troubleshooting)
+- [Best Practices for SAML Implementation](#best-practices-for-saml-implementation)
+
+---
 
 ## Creating a Keycloak OpenID Connect Client
 
