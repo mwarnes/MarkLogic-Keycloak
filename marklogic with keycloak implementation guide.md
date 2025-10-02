@@ -20,7 +20,7 @@ Keycloak is an open-source identity and access management solution developed by 
 
 ## Scope and Assumptions
 
-This guide concentrates specifically on creating a Keycloak client for OAuth2 authentication with MarkLogic Application Servers. The following assumptions are made:
+This guide concentrates specifically on creating a Keycloak client for OAuth2 and SAML authentication with MarkLogic Application Servers. The following assumptions are made:
 
 - Keycloak has already been installed and is running
 - A Keycloak realm is already available and configured
@@ -36,11 +36,11 @@ Create a Keycloak client for use by MarkLogic, the client should use "Standard F
 
 **Note:** MarkLogic does not support "Implicit Flow" so the Access settings can be left unpopulated.
 
-### Keycloak Client Configuration Settings
+### Keycloak OpenID Client Configuration Settings
 
 The following screenshot shows an example configuration for a Keycloak client:
 
-![Keycloak Client Configuration Settings](images/Keycloak%20Client%20configuration.png)
+![Keycloak OAUTH Client Configuration Settings](images/Keycloak%20OAUTH%20Client%20configuration.png)
 
 ### Keycloak Roles Considerations
 
@@ -86,7 +86,7 @@ To work around this limitation, Keycloak must be configured to provide roles in 
 
 The following example demonstrates a Protocol Mapper that has been added to a Profile Scope, which extracts user Realm roles and returns them as a new claim using a string data type and name "marklogic-roles".
 
-![Keycloak Mapper](images/Keycloak%20Mapper.png)
+![Keycloak Mapper](images/Keycloak%20OAUTH%20Mapper.png)
 
 MarkLogic will be able to access these roles by referencing the claim in the External Security profile configuration.
 
@@ -155,7 +155,7 @@ Access the MarkLogic AdminUI interface and navigate to the External Security con
 
 ### Example Configuration Reference
 
-For reference, the following is an example of a configured External Security profile:
+For reference, the following is an example of a configured OAUTH External Security profile:
 
 ![MarkLogic OAUTH External Security Configuration](images/MarkLogic%20OAUTH%20External%20Security%20Configuration.png)
 
@@ -265,6 +265,7 @@ To increase the level of debug messages in MarkLogic logs, enable the following 
    - `JSON Status`
    - `JSON Communications`
    - `JSON Processing`
+   - `External Authenticate`
 
 This trace event will provide detailed information about JSON processing and OAuth2 token validation in the MarkLogic logs.
 
@@ -431,5 +432,361 @@ curl -H "Authorization: Bearer $ACCESS_TOKEN" \
 4. **Monitor Both Systems**: Watch logs on both Keycloak and MarkLogic simultaneously
 5. **Document Configurations**: Keep detailed records of all configuration settings
 6. **Test with Simple Scenarios**: Start with basic authentication before adding complex role mappings
+
+---
+
+# SAML Integration with Keycloak and MarkLogic
+
+This section covers the configuration and integration of Keycloak as a SAML 2.0 identity provider for MarkLogic Application Servers. SAML (Security Assertion Markup Language) provides an alternative authentication method to OAuth2, particularly suited for enterprise environments with existing SAML infrastructure.
+
+## SAML Integration Overview
+
+SAML authentication flow between MarkLogic and Keycloak involves:
+
+1. **User Access**: User attempts to access a MarkLogic application
+2. **SAML Request**: MarkLogic generates and sends a SAML authentication request to Keycloak
+3. **User Authentication**: Keycloak authenticates the user (if not already authenticated)
+4. **SAML Response**: Keycloak generates a SAML response with user attributes and roles
+5. **Token Validation**: MarkLogic validates the SAML response and extracts user information
+6. **Access Granted**: User gains access to MarkLogic resources based on their roles
+
+## Creating a Keycloak SAML Client
+
+### Step 1: Create SAML Client in Keycloak
+
+1. **Access Keycloak Admin Console**: Navigate to your Keycloak admin interface
+2. **Select Realm**: Choose your realm (e.g., "progress-marklogic")
+3. **Navigate to Clients**: Click "Clients" in the left sidebar
+4. **Create Client**: Click "Create client"
+5. **Configure Basic Settings**:
+   - **Client type**: Select "SAML"
+   - **Client ID**: Enter a unique identifier (e.g., "marklogic-saml")
+   - **Name**: Provide a descriptive name
+   - **Description**: Optional description for documentation
+
+### Step 2: Configure SAML Client Settings
+
+#### General Settings
+
+- **Client ID**: `marklogic-saml` (or your chosen identifier)
+- **Name**: `MarkLogic SAML Client`
+- **Description**: `SAML client for MarkLogic Application Server authentication`
+- **Always display in UI**: Off (typically)
+- **Client authentication**: On (recommended for production)
+
+**Important Note**: Make a note of the Client ID chosen as this must match excactlythe `SAML Issuer` field in the MarkLogic SAML configuration.
+
+#### SAML Settings
+
+**Basic SAML Configuration:**
+- **Include AuthnStatement**: On
+- **Include OneTimeUse Condition**: Off
+- **Sign Documents**: On
+- **Sign Assertions**: On
+- **Name ID Format**: username or email
+- **Home URL**: `http://your-marklogic-server:8002/`
+- **Valid Redirect URIs**: `http://your-marklogic-server:8002/`
+- **Master SAML Processing URL**: `http://your-marklogic-server:8002/`
+
+The following screenshot shows an example configuration for a Keycloak client:
+
+![Keycloak SAML Client Configuration Settings](images/Keycloak%20SAML%20Client%20Configuration.png)
+
+### Step 3: Configure SAML Attribute Mappings
+
+Similar to OAuth2, you need to map user attributes and roles for MarkLogic consumption.
+
+#### Create Role Mapper
+
+1. **Navigate to Client Scopes**: Go to "Client scopes" in Keycloak
+2. **Select Client Scope**: Choose the appropriate scope or create a new one
+3. **Add Mapper**: Click "Add predefined mapper"
+4. **Configure Role Mapper**:
+   - **Name**: `marklogic-roles`
+   - **Mapper Type**: `Role list`
+   - **Role Attribute Name**: `marklogic-roles`
+   - **Friendly Name**: `MarkLogic Roles`
+   - **SAML Attribute Name**: `marklogic-roles`
+   - **SAML Attribute NameFormat**: `Basic`
+
+![Keycloak SAML Mapper](images/Keycloak%20SAML%20Mapper.png)
+
+## Creating MarkLogic SAML External Security Profile
+
+### Step 1: Obtain Keycloak SAML Metadata
+
+First, obtain the SAML metadata from your Keycloak realm:
+
+**SAML Metadata URL:**
+```
+https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/descriptor
+```
+
+Download or access this metadata as it contains essential configuration information for MarkLogic.
+
+**Example IdP Metadata**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://oauth.warnesnet.com:8443/realms/progress-marklogic">
+    <md:IDPSSODescriptor WantAuthnRequestsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo>
+                <ds:KeyName>9xJihMI2qDH9Aon014odONQLByhF553_8Wu_zcM2StM</ds:KeyName>
+                <ds:X509Data>
+                    <ds:X509Certificate>MIICszCCAZsCBgGXq8D+0jANBgkqhkiG9w0BAQsFADAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwHhcNMjUwNjI2MTAxOTAxWhcNMzUwNjI2MTAyMDQxWjAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDwjlL7ZifNR5ixXQrRvwD9dDiQFa6Fm2iPOnpxwhvr+k9c2hRpbCvo0r43I5lNGE5cDab31AHfO8gfz0nJlpzLAfRIUZ1H6ikcZD09ctRE3+TMQYkyMcPC7rMpoyPr2BoPzqVbMoE+84sUbsDfrbfp51PKh51MvILDjfWGCyOw1J5+gLspT9woBQULMPTdS41omT8JtOCqEUmi4+04fQgadano3ruhom8QSRXuUZOTpwpDTxYRjFIi//wywRSRRIJbFFw58c1ec+8JSz9XQqh0yahKdX+O53zyIhT0HakAkNUZ+cSU6czJHXrAtEZNg4dy2AHG9wpl7deC9DlsZmUhAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAE+fJ24YCSAw0/C0tdj8meNoeypkODUc9KYUHZdjnjJT+Efcs7bzV3JzXk/ZHTNWRewCJtfIe7dOYb50EqjZ+g5ToIgYfh9UgoKH4IrZF7caha/xcm3ffvIqlv67llATDolRPtTZMgJkhnTozeUajh2sDVYXHV78Qh4NsgtGVjPPxPdebx4cx4Qs5v0aiWdNEsp1ranvElFzcuVBbTe6wpp62IGLWawhiVeIe4LkIl4Qj/CGTPnx2sWitFZZ7jX9oIJjh4i2OtM0at3Uc+fj3InOTONL4Q2J6gf/1YfyYMygjcdsX5TSZmF7OIhf8qsDUeE9I1yAtUkTKDV/FevmFDE=</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/resolve" index="0"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+    </md:IDPSSODescriptor>
+</md:EntityDescriptor>
+```
+
+### Step 2: Configure MarkLogic External Security Profile
+
+Access the MarkLogic Admin interface and create a new External Security profile:
+
+#### Required Configuration Settings
+
+1. **External Security Name**: `Keycloak-SAML`
+2. **Description**: `SAML integration with Keycloak identity provider`
+3. **Authentication Protocol**: `saml`
+4. **Cache Timeout**: `300` (or as required)
+5. **Authorization**: `saml`
+
+#### SAML-Specific Settings
+
+1. **SAML Settings**:
+   - **SAML Entity ID**: `YOUR-SAML-SP` 
+   - **SAML Destination**: `https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml` (Matches SingleSignOnService value for HTTP-POST from Keycloak SAML metadata )
+   - **SAML Issuer**: `marklogic-saml` (matches Keycloak Client ID)
+
+2. **Certificate Configuration**:
+   - **IdP Certificate**: Copy the X.509 certificate from Keycloak SAML metadata
+
+**Important Note**: The certificate value from the Keycloak SAML metadata is a Base64 encoded string. MarkLogic requires this certificate to be converted to PEM format before it can be used in the External Security configuration.
+
+**Base64 to PEM Conversion Process**:
+The certificate in the metadata appears as a single Base64 string without headers. You must add the appropriate PEM headers (`-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----`) and ensure proper line formatting (64 characters per line) for MarkLogic to accept it.
+
+3. **Attribute Mapping**:
+   - **Username Attribute**: `username`
+   - **Role Attribute**: `marklogic-roles`
+   - **Email Attribute**: `email` (optional)
+
+### Step 3: Certificate Management
+
+#### Obtaining Keycloak Certificate
+
+Extract the X.509 certificate from the SAML metadata:
+
+```xml
+<ds:X509Certificate>
+MIICmzCCAYMCBgF/... (certificate content)
+</ds:X509Certificate>
+```
+
+#### Converting Base64 Certificate to PEM Format
+
+The certificate content from the SAML metadata is in Base64 format and must be converted to PEM format for MarkLogic. Use the following script to perform this conversion:
+
+```bash
+#!/bin/bash
+
+# Certificate conversion script
+# Usage: ./convert-cert.sh <base64-certificate-string>
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <base64-certificate-string>"
+    echo "Example: $0 'MIICmzCCAYMCBgF/...'"
+    exit 1
+fi
+
+BASE64_CERT="$1"
+
+# Create PEM formatted certificate
+cat << EOF > keycloak-idp-certificate.pem
+-----BEGIN CERTIFICATE-----
+$(echo "$BASE64_CERT" | fold -w 64)
+-----END CERTIFICATE-----
+EOF
+
+echo "Certificate converted and saved as 'keycloak-idp-certificate.pem'"
+echo "You can now copy the contents of this file into MarkLogic External Security configuration"
+
+# Optionally display the certificate info
+echo ""
+echo "Certificate information:"
+openssl x509 -in keycloak-idp-certificate.pem -text -noout | head -20
+```
+
+**Alternative one-liner conversion:**
+
+```bash
+# Quick conversion command
+echo "-----BEGIN CERTIFICATE-----" > keycloak-cert.pem
+echo "YOUR_BASE64_CERT_HERE" | fold -w 64 >> keycloak-cert.pem  
+echo "-----END CERTIFICATE-----" >> keycloak-cert.pem
+```
+
+**Manual conversion steps:**
+
+1. Copy the Base64 certificate string from the SAML metadata (content between `<ds:X509Certificate>` tags)
+2. Create a new file with `.pem` extension
+3. Add the header: `-----BEGIN CERTIFICATE-----`
+4. Add the Base64 certificate content with line breaks every 64 characters
+5. Add the footer: `-----END CERTIFICATE-----`
+6. Save the file and copy its contents into MarkLogic External Security configuration
+
+### Example Configuration Reference
+
+For reference, the following is an example of a configured SAML External Security profile:
+
+![MarkLogic OAUTH External Security Configuration](images/MarkLogic%20SAML%20External%20Security%20Configuration.png)
+
+## SAML Testing and Validation
+
+### Testing SAML Authentication Flow
+
+1. **Configure App Server**: Associate the SAML External Security profile with your MarkLogic App Server
+2. **Test SSO**: Access a protected MarkLogic resource
+3. **Verify Redirect**: Confirm redirection to Keycloak login page
+4. **Complete Authentication**: Log in with valid Keycloak credentials
+5. **Validate Response**: Verify successful return to MarkLogic with proper roles
+
+### SAML Response Validation
+
+Use browser developer tools to inspect the SAML response:
+
+1. **Network Tab**: Monitor network requests during authentication
+2. **SAML Response**: Look for POST requests to the ACS endpoint
+3. **Response Content**: Decode base64 SAML response to verify attributes
+
+Example SAML assertion structure:
+```xml
+<saml:Assertion>
+  <saml:AttributeStatement>
+    <saml:Attribute Name="Role"
+        NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
+        <saml:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string" >marklogic-admin</saml:AttributeValue>
+    </saml:Attribute>
+  </saml:AttributeStatement>
+</saml:Assertion>
+```
+
+## SAML Troubleshooting
+
+### Common SAML Issues
+
+#### 1. Certificate Validation Failures
+
+**Symptoms:**
+- SAML signature validation errors
+- Certificate-related error messages in MarkLogic logs
+
+**Solutions:**
+- Verify IdP certificate is correctly copied from Keycloak metadata
+- Ensure certificate format is correct (PEM format)
+- Check certificate expiration dates
+- Validate certificate chain if using intermediate CAs
+
+#### 2. Attribute Mapping Problems
+
+**Symptoms:**
+- Users authenticate but receive no roles
+- Missing user attributes in MarkLogic
+
+**Solutions:**
+- Verify attribute mapper configuration in Keycloak
+- Check SAML attribute names match MarkLogic configuration
+- Inspect SAML response for correct attribute format
+- Ensure role mappers are enabled and properly configured
+
+#### 3. URL and Endpoint Mismatches
+
+**Symptoms:**
+- SAML redirect failures
+- ACS endpoint not found errors
+
+**Solutions:**
+- Verify ACS URL matches in both Keycloak and MarkLogic configurations
+- Check redirect URIs are correctly configured
+- Ensure network accessibility between systems
+- Validate SLO endpoints for logout functionality
+
+### SAML Debug Logging
+
+#### MarkLogic SAML Trace Events
+
+Enable the following trace events in MarkLogic for SAML debugging:
+
+1. **Navigate to Diagnostics**: MarkLogic Admin > Groups > Default > Diagnostics
+2. **Add Trace Events**:
+   - `SAML`
+   - `SAML Response`
+   - `External Authenticate`
+
+#### Keycloak SAML Logging
+
+Enable SAML-specific logging in Keycloak:
+
+```bash
+# Enable SAML protocol logging
+/subsystem=logging/logger=org.keycloak.protocol.saml:add(level=DEBUG)
+
+# Enable SAML processing logging  
+/subsystem=logging/logger=org.keycloak.saml:add(level=DEBUG)
+
+# Enable XML signature logging
+/subsystem=logging/logger=org.keycloak.saml.common:add(level=DEBUG)
+```
+
+### SAML Diagnostic Tools
+
+#### Decode SAML Response
+
+Use online tools or command-line utilities to decode SAML responses:
+
+```bash
+# Decode base64 SAML response
+echo "BASE64_SAML_RESPONSE" | base64 -d | xmllint --format -
+```
+
+Alternativel use a Browser Extension such as  `SAML Tracer` to track SAML Requests and Responses
+
+#### Validate SAML Metadata
+
+Test Keycloak SAML metadata accessibility:
+
+```bash
+# Test metadata endpoint
+curl -v "https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/descriptor"
+```
+
+## Best Practices for SAML Implementation
+
+1. **Certificate Management**: Implement proper certificate rotation procedures
+2. **Secure Communication**: Always use HTTPS for SAML endpoints
+3. **Attribute Minimization**: Only include necessary attributes in SAML responses
+4. **Regular Testing**: Periodically test both SSO and SLO flows
+5. **Documentation**: Maintain detailed documentation of all SAML configurations
+6. **Monitoring**: Set up monitoring for SAML authentication success/failure rates
 
 

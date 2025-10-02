@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://oauth.warnesnet.com:8443/realms/progress-marklogic">
+    <md:IDPSSODescriptor WantAuthnRequestsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:KeyDescriptor use="signing">
+            <ds:KeyInfo>
+                <ds:KeyName>9xJihMI2qDH9Aon014odONQLByhF553_8Wu_zcM2StM</ds:KeyName>
+                <ds:X509Data>
+                    <ds:X509Certificate>MIICszCCAZsCBgGXq8D+0jANBgkqhkiG9w0BAQsFADAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwHhcNMjUwNjI2MTAxOTAxWhcNMzUwNjI2MTAyMDQxWjAdMRswGQYDVQQDDBJwcm9ncmVzcy1tYXJrbG9naWMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDwjlL7ZifNR5ixXQrRvwD9dDiQFa6Fm2iPOnpxwhvr+k9c2hRpbCvo0r43I5lNGE5cDab31AHfO8gfz0nJlpzLAfRIUZ1H6ikcZD09ctRE3+TMQYkyMcPC7rMpoyPr2BoPzqVbMoE+84sUbsDfrbfp51PKh51MvILDjfWGCyOw1J5+gLspT9woBQULMPTdS41omT8JtOCqEUmi4+04fQgadano3ruhom8QSRXuUZOTpwpDTxYRjFIi//wywRSRRIJbFFw58c1ec+8JSz9XQqh0yahKdX+O53zyIhT0HakAkNUZ+cSU6czJHXrAtEZNg4dy2AHG9wpl7deC9DlsZmUhAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAE+fJ24YCSAw0/C0tdj8meNoeypkODUc9KYUHZdjnjJT+Efcs7bzV3JzXk/ZHTNWRewCJtfIe7dOYb50EqjZ+g5ToIgYfh9UgoKH4IrZF7caha/xcm3ffvIqlv67llATDolRPtTZMgJkhnTozeUajh2sDVYXHV78Qh4NsgtGVjPPxPdebx4cx4Qs5v0aiWdNEsp1ranvElFzcuVBbTe6wpp62IGLWawhiVeIe4LkIl4Qj/CGTPnx2sWitFZZ7jX9oIJjh4i2OtM0at3Uc+fj3InOTONL4Q2J6gf/1YfyYMygjcdsX5TSZmF7OIhf8qsDUeE9I1yAtUkTKDV/FevmFDE=</ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </md:KeyDescriptor>
+        <md:ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml/resolve" index="0"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+        <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+        <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml"/>
+    </md:IDPSSODescriptor>
+</md:EntityDescriptor>

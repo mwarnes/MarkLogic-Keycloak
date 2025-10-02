@@ -1,0 +1,5 @@
+<AuthnRequest xmlns="urn:oasis:names:tc:SAML:2.0:protocol"
+    xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="c10492205798990994279" Version="2.0" IssueInstant="2025-10-02T08:29:25Z" Destination="https://oauth.warnesnet.com:8443/realms/progress-marklogic/protocol/saml" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" AssertionConsumerServiceURL="http://oauth.warnesnet.com:9002/">
+    <saml:Issuer>marklogic-saml</saml:Issuer>
+    <NameIDPolicy Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" AllowCreate="false" />
+</AuthnRequest>
